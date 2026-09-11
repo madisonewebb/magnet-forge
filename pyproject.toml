@@ -1,0 +1,5 @@
+[tool.uv.workspace]
+members = ["format/python", "processing"]
+
+[tool.uv]
+package = false

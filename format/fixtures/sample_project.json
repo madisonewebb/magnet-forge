@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1",
+  "sourceImage": {
+    "path": "sample_project_source.png",
+    "widthPx": 100,
+    "heightPx": 60
+  },
+  "mask": {
+    "path": "sample_project_mask.png",
+    "widthPx": 100,
+    "heightPx": 60
+  },
+  "palette": [
+    { "id": "black", "name": "Black", "colorHex": "#000000" },
+    { "id": "red", "name": "Red", "colorHex": "#FF0000" },
+    { "id": "blue", "name": "Blue", "colorHex": "#0000FF" }
+  ],
+  "regions": [
+    {
+      "id": "region-ring",
+      "paletteId": "black",
+      "outer": [[20, 10], [40, 10], [40, 30], [20, 30]],
+      "holes": [[[27, 17], [33, 17], [33, 23], [27, 23]]]
+    },
+    {
+      "id": "region-narrow-feature",
+      "paletteId": "red",
+      "outer": [
+        [55, 10], [75, 10], [75, 25], [65, 25],
+        [65, 40], [63, 40], [63, 25], [55, 25]
+      ]
+    },
+    {
+      "id": "region-triangle",
+      "paletteId": "blue",
+      "outer": [[10, 40], [20, 40], [15, 50]]
+    }
+  ],
+  "physicalDimensions": {
+    "targetWidthMm": 50,
+    "totalThicknessMm": 4,
+    "colorSkinThicknessMm": 0.8,
+    "backingBorderWidthMm": 3
+  },
+  "printProfile": {
+    "printerName": "Generic FDM",
+    "nozzleDiameterMm": 0.4,
+    "materialName": "PLA",
+    "layerHeightMm": 0.2,
+    "minFeatureSizeMm": 0.8
+  },
+  "pocketSettings": {
+    "pockets": [
+      {
+        "id": "pocket-1",
+        "kind": "discMagnetRearOpenGlueIn",
+        "diameterMm": 6,
+        "depthMm": 2,
+        "xMm": 25,
+        "yMm": 15,
+        "clearanceMm": 0.1
+      }
+    ]
+  },
+  "extensions": {}
+}

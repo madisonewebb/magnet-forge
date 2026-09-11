@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://magnet-forge/schema/project_schema.json",
+  "title": "Magnet Forge project file",
+  "description": "See ../SPEC.md for the authoritative human-readable contract, including cross-field invariants that this schema cannot express (e.g. mask/sourceImage dimension equality, palette id references, stable-id uniqueness, finite-number checks).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sourceImage",
+    "mask",
+    "palette",
+    "regions",
+    "physicalDimensions",
+    "printProfile",
+    "pocketSettings"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "sourceImage": { "$ref": "#/$defs/sourceImageRef" },
+    "mask": { "$ref": "#/$defs/mask" },
+    "palette": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/paletteEntry" },
+      "minItems": 2,
+      "maxItems": 8
+    },
+    "regions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/region" }
+    },
+    "physicalDimensions": { "$ref": "#/$defs/physicalDimensions" },
+    "printProfile": { "$ref": "#/$defs/printProfile" },
+    "pocketSettings": { "$ref": "#/$defs/pocketSettings" },
+    "extensions": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "$defs": {
+    "finiteNumber": {
+      "type": "number"
+    },
+    "point": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finiteNumber" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "polygon": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/point" },
+      "minItems": 3
+    },
+    "sourceImageRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "widthPx", "heightPx"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "widthPx": { "type": "integer", "exclusiveMinimum": 0 },
+        "heightPx": { "type": "integer", "exclusiveMinimum": 0 }
+      }
+    },
+    "mask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "widthPx", "heightPx"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "widthPx": { "type": "integer", "exclusiveMinimum": 0 },
+        "heightPx": { "type": "integer", "exclusiveMinimum": 0 }
+      }
+    },
+    "paletteEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "colorHex"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "colorHex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+      }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "paletteId", "outer"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "paletteId": { "type": "string", "minLength": 1 },
+        "outer": { "$ref": "#/$defs/polygon" },
+        "holes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/polygon" },
+          "default": []
+        }
+      }
+    },
+    "physicalDimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetWidthMm",
+        "totalThicknessMm",
+        "colorSkinThicknessMm",
+        "backingBorderWidthMm"
+      ],
+      "properties": {
+        "targetWidthMm": { "type": "number", "exclusiveMinimum": 0 },
+        "totalThicknessMm": { "type": "number", "exclusiveMinimum": 0 },
+        "colorSkinThicknessMm": { "type": "number", "exclusiveMinimum": 0 },
+        "backingBorderWidthMm": { "type": "number", "minimum": 0 }
+      }
+    },
+    "printProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "printerName",
+        "nozzleDiameterMm",
+        "materialName",
+        "layerHeightMm",
+        "minFeatureSizeMm"
+      ],
+      "properties": {
+        "printerName": { "type": "string", "minLength": 1 },
+        "nozzleDiameterMm": { "type": "number", "exclusiveMinimum": 0 },
+        "materialName": { "type": "string", "minLength": 1 },
+        "layerHeightMm": { "type": "number", "exclusiveMinimum": 0 },
+        "minFeatureSizeMm": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "pocketSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pockets"],
+      "properties": {
+        "pockets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/pocket" },
+          "default": []
+        }
+      }
+    },
+    "pocket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "diameterMm",
+        "depthMm",
+        "xMm",
+        "yMm",
+        "clearanceMm"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "discMagnetRearOpenGlueIn" },
+        "diameterMm": { "type": "number", "exclusiveMinimum": 0 },
+        "depthMm": { "type": "number", "exclusiveMinimum": 0 },
+        "xMm": { "$ref": "#/$defs/finiteNumber" },
+        "yMm": { "$ref": "#/$defs/finiteNumber" },
+        "clearanceMm": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# Editors/OS
+.DS_Store
+
+# Env files with local secrets (committed examples end in .env.example)
+.env

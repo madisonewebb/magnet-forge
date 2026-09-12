@@ -71,3 +71,9 @@ cd web && npm run build && npm run lint              # TypeScript: type-check, b
 Only committed `.env.example` files contain configuration; real `.env`
 files are gitignored and never committed. `web/.env.example` documents
 `VITE_API_BASE_URL`, the only setting the web app currently needs.
+
+## Containers
+
+For building and running each service as a container image (for
+deployment, or to sanity-check a change outside the local dev setup
+above), see [`docs/DOCKER.md`](./DOCKER.md).

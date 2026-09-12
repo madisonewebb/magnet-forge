@@ -1,5 +1,21 @@
 [tool.uv.workspace]
 members = ["format/python", "processing"]
 
+[dependency-groups]
+dev = [
+    "ruff==0.16.7",
+]
+
 [tool.uv]
 package = false
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["format/python/src", "format/python/tests", "processing/src", "processing/tests"]
+
+[tool.ruff.lint]
+# Pyflakes + pycodestyle errors + isort import ordering. Deliberately conservative:
+# this ticket is about wiring the lint/test workflow, not maximizing strictness or
+# reformatting existing, already-reviewed source under S01/S02.
+select = ["E", "F", "I"]

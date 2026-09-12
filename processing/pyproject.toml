@@ -7,6 +7,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "magnet-forge-format",
+    "pillow>=11.0",
+    "python-multipart>=0.0.12",
 ]
 
 [tool.uv.sources]

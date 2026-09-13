@@ -1,0 +1,56 @@
+# Magnet Forge web app (Vite + React + TypeScript SPA), served as static
+# files by a minimal non-root nginx image.
+#
+# Build context: the REPO ROOT (kept consistent with docker/Dockerfile.processing,
+# and needed so this Dockerfile can also pull in docker/nginx.web.conf):
+#
+#   docker build -f docker/Dockerfile.web -t magnet-forge-web .
+#
+# IMPORTANT - VITE_API_BASE_URL is a build-time setting, not a runtime one:
+# Vite inlines VITE_* env vars into the JS bundle at `npm run build` time.
+# Setting VITE_API_BASE_URL as a `docker run -e` environment variable on the
+# container has NO effect once the image is built -- the static JS has
+# already been produced. To point a given image at a particular processing
+# service URL, pass it as a build ARG and rebuild for that target:
+#
+#   docker build -f docker/Dockerfile.web \
+#     --build-arg VITE_API_BASE_URL=https://processing.example.com \
+#     -t magnet-forge-web .
+#
+# This means each deployment target (local/staging/prod) that needs a
+# different processing service URL needs its own image build. That's a
+# deliberate simplification rather than an oversight -- a runtime env
+# substitution shim (e.g. rewriting the built JS at container start) would
+# add complexity this app doesn't need yet.
+#
+# No secrets are involved: VITE_API_BASE_URL is just the processing
+# service's base URL (see web/.env.example).
+
+ARG VITE_API_BASE_URL=http://localhost:8000
+
+FROM node:20-slim AS build
+
+WORKDIR /app
+
+# Install with the committed lockfile only (no dev-time drift).
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+COPY web/ ./
+
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+RUN npm run build
+
+# --- final stage: minimal static file server, non-root by default ---
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS final
+
+# chown to the image's built-in non-root nginx user (uid/gid 101) so its
+# entrypoint scripts can rewrite the config in place (e.g. IPv6 listen setup).
+COPY --chown=nginx:nginx docker/nginx.web.conf /etc/nginx/conf.d/default.conf
+COPY --from=build --chown=nginx:nginx /app/dist /usr/share/nginx/html
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]

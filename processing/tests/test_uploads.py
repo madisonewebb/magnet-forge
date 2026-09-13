@@ -2,8 +2,8 @@ import base64
 import io
 
 import pytest
-from PIL import Image
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from magnet_forge_processing.main import app
 from magnet_forge_processing.settings import UploadLimits, get_upload_limits

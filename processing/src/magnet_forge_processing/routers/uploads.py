@@ -70,7 +70,10 @@ async def create_upload(
         got_mb = len(data) / (1024 * 1024)
         raise HTTPException(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"File is too large ({got_mb:.1f} MB). The maximum allowed size is {max_mb:.0f} MB.",
+            detail=(
+                f"File is too large ({got_mb:.1f} MB). "
+                f"The maximum allowed size is {max_mb:.0f} MB."
+            ),
         )
 
     try:

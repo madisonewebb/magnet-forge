@@ -1,0 +1,13 @@
+# Keep the build context small for both docker/Dockerfile.processing and
+# docker/Dockerfile.web (both are built with the repo root as context).
+.git/
+.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+web/node_modules/
+web/dist/
+docs/
+*.md
+.env
+**/.env

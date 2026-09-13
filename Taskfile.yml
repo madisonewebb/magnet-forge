@@ -1,0 +1,66 @@
+# https://taskfile.dev
+#
+# Single source of truth for the install/lint/test commands used both locally
+# and in CI (.github/workflows/ci.yml). `task install-dev`, `task lint`, and
+# `task test` cover both the Python workspace (format/python + processing)
+# and the web app; the namespaced sub-tasks let you target one stack at a
+# time during development.
+version: '3'
+
+tasks:
+  install-dev:
+    desc: Install dev dependencies for the Python workspace and the web app
+    cmds:
+      - task: install-dev:python
+      - task: install-dev:web
+
+  install-dev:python:
+    desc: Install format/python + processing (and dev deps, incl. ruff) via uv, pinned by uv.lock
+    cmds:
+      - uv sync
+
+  install-dev:web:
+    desc: Install web app dependencies via npm, pinned by web/package-lock.json
+    dir: web
+    cmds:
+      - npm ci
+
+  lint:
+    desc: Lint the Python workspace (ruff) and the web app (ESLint)
+    cmds:
+      - task: lint:python
+      - task: lint:web
+
+  lint:python:
+    desc: Run ruff over format/python and processing
+    cmds:
+      - uv run ruff check format/python processing
+
+  lint:web:
+    desc: Run ESLint over the web app
+    dir: web
+    cmds:
+      - npm run lint
+
+  test:
+    desc: Run the Python test suite and the web app's type-check/build
+    cmds:
+      - task: test:python
+      - task: test:web
+
+  test:python:
+    desc: Run pytest across format/python and processing
+    cmds:
+      - uv run pytest format/python/tests processing/tests
+
+  test:web:
+    desc: >-
+      Type-check and build the web app. NOTE: there is no test framework or
+      test files in web/ yet (tracked separately, out of scope for S31).
+      `npm run build` runs `tsc -b && vite build`, which type-checks the
+      whole app — today that's the only meaningful automated check
+      available, so it stands in for a "test" task until a real test suite
+      exists.
+    dir: web
+    cmds:
+      - npm run build

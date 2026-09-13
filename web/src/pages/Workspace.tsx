@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchFixtureProject } from "../api/client";
 import type { ProjectSummary } from "../api/schemas";
+import { ImageUpload } from "../components/ImageUpload";
 
 type LoadState =
   | { status: "loading" }
@@ -31,6 +32,22 @@ export function Workspace() {
     };
   }, []);
 
+  return (
+    <div>
+      <section>
+        <h2>Upload artwork</h2>
+        <ImageUpload />
+      </section>
+
+      <section style={{ marginTop: "2rem" }}>
+        <h2>Fixture project</h2>
+        {renderFixtureSection(state)}
+      </section>
+    </div>
+  );
+}
+
+function renderFixtureSection(state: LoadState) {
   if (state.status === "loading") {
     return <p role="status">Loading fixture project…</p>;
   }

@@ -16,3 +16,14 @@ export const projectSummarySchema = z.object({
 });
 
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
+
+// Response shape of POST /uploads (see processing/src/magnet_forge_processing/routers/uploads.py).
+export const uploadResponseSchema = z.object({
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  hasAlpha: z.boolean(),
+  format: z.string(),
+  imageDataUrl: z.string().startsWith("data:image/png;base64,"),
+});
+
+export type UploadResponse = z.infer<typeof uploadResponseSchema>;

@@ -102,6 +102,41 @@ With both services running, either:
   fixture is loaded, validated, and serialized by
   `magnet_forge_format.load_project`.
 
+## Uploading artwork
+
+`POST /uploads` (multipart/form-data, field name `file`) accepts a PNG or
+JPEG image, normalizes EXIF orientation, and returns metadata plus the
+normalized image re-encoded as PNG (`imageDataUrl`, a base64 data URL) —
+see `processing/src/magnet_forge_processing/routers/uploads.py` for the
+full response shape. The web app's upload UI lives in
+`web/src/components/ImageUpload.tsx`, used from the Workspace page.
+
+Format is validated by decoding the file's actual bytes with Pillow, not
+by trusting the filename extension or the client-supplied Content-Type —
+a file with a misleading extension is rejected with a 415, not silently
+accepted.
+
+Documented limits (`processing/src/magnet_forge_processing/settings.py`,
+overridable via `MAGNET_FORGE_MAX_UPLOAD_BYTES` /
+`MAGNET_FORGE_MAX_UPLOAD_DIMENSION_PX` env vars):
+
+- Max file size: **25 MB**
+- Max dimension: **8000px** on the longest side
+
+Both are checked before the (more expensive) full pixel decode. Corrupt or
+undecodable files, oversized files, oversized dimensions, and unsupported
+formats each return a 4xx with a human-readable `detail` message — never a
+500 or a raw stack trace.
+
+```bash
+curl -F "file=@artwork.png;type=image/png" http://localhost:8000/uploads
+```
+
+The upload UI (`web/src/components/ImageUpload.tsx`) is currently covered
+only by the processing service's `processing/tests/test_uploads.py` plus
+manual/code-review verification — there is no web-side test framework yet
+(see the note on `task test:web` above).
+
 ## Environment files
 
 Only committed `.env.example` files contain configuration; real `.env`

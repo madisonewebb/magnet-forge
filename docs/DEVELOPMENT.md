@@ -29,7 +29,7 @@ From a clean checkout, one command each:
 ```bash
 task install-dev   # uv sync (format/python + processing) + npm ci (web)
 task lint           # ruff check (format/python, processing) + eslint (web)
-task test            # pytest (format/python, processing) + tsc -b && vite build (web)
+task test            # pytest (format/python, processing) + tsc -b && vite build + vitest (web)
 ```
 
 These are exactly the commands `.github/workflows/ci.yml` runs, in the same
@@ -41,14 +41,15 @@ want to run just one stack while iterating.
 Python linting is `ruff` (added as a pinned dev dependency at the repo root
 and configured via `[tool.ruff]` in the root `pyproject.toml`); the web app
 reuses its existing ESLint (`npm run lint`) and TypeScript build
-(`npm run build`, which type-checks via `tsc -b`) — nothing new was added on
-the web side.
+(`npm run build`, which type-checks via `tsc -b`).
 
-> **Note on `task test:web`:** there is no test framework or test files in
-> `web/` yet (adding one is out of scope here). `npm run build` runs
-> `tsc -b && vite build`, which type-checks the whole app — today that's the
-> only meaningful automated check available, so it stands in as the web
-> "test" step until a real test suite exists.
+> **Note on `task test:web`:** there is still no component/DOM test setup —
+> `npm run build` (`tsc -b && vite build`) type-checks the whole app, and
+> `npm run test` (Vitest) covers framework-agnostic logic modules under
+> `web/src/lib/**/*.test.ts` (e.g. `mask.ts`, the S05 background-mask
+> primitives), which are written to operate on plain pixel buffers so they
+> don't need a DOM. React components themselves remain covered by
+> manual/code-review verification until a component test setup exists.
 
 ## Running the services locally
 
@@ -134,8 +135,38 @@ curl -F "file=@artwork.png;type=image/png" http://localhost:8000/uploads
 
 The upload UI (`web/src/components/ImageUpload.tsx`) is currently covered
 only by the processing service's `processing/tests/test_uploads.py` plus
-manual/code-review verification — there is no web-side test framework yet
-(see the note on `task test:web` above).
+manual/code-review verification — there is no web-side component test
+setup yet (see the note on `task test:web` above).
+
+## Removing or correcting the background
+
+After a successful upload, the Workspace page renders
+`web/src/components/BackgroundEditor.tsx`, entirely client-side (no new
+processing-service endpoint):
+
+- An existing alpha channel (`hasAlpha` from the upload response) is
+  authoritative and seeds the initial mask directly — no user action
+  needed.
+- An opaque image starts fully foreground; the "select background" tool
+  runs a deterministic, tolerance-bounded flood fill from a clicked pixel
+  (`floodFillSelect` in `web/src/lib/mask.ts`). Selection only follows
+  *contiguous* similar-colored pixels from the click, so a black outline
+  detail is never affected by clicking a black background, even though
+  they're the same color — only connectivity, not color-matching over the
+  whole image, drives the selection.
+- "Keep" / "remove" brushes (`applyBrushStroke` / `applyBrushLine`) correct
+  the mask by hand at any point; a "compare with original" toggle re-renders
+  the untouched image for reference without discarding the mask.
+- The original pixel buffer is never mutated — only a short-lived composite
+  copy (background pixels made transparent) is rendered each frame — so the
+  source image and the mask both stay independently editable going into
+  later pipeline steps (palette reduction, vectorization), which aren't
+  implemented yet.
+
+The pixel-level primitives in `web/src/lib/mask.ts` are framework-agnostic
+(operate on plain typed arrays) and covered by `web/src/lib/mask.test.ts`;
+the React component itself is manual/code-review verified only, per the
+`task test:web` note above.
 
 ## Environment files
 

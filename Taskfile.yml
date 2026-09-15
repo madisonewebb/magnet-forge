@@ -43,7 +43,7 @@ tasks:
       - npm run lint
 
   test:
-    desc: Run the Python test suite and the web app's type-check/build
+    desc: Run the Python test suite and the web app's type-check/build/unit tests
     cmds:
       - task: test:python
       - task: test:web
@@ -55,12 +55,13 @@ tasks:
 
   test:web:
     desc: >-
-      Type-check and build the web app. NOTE: there is no test framework or
-      test files in web/ yet (tracked separately, out of scope for S31).
-      `npm run build` runs `tsc -b && vite build`, which type-checks the
-      whole app — today that's the only meaningful automated check
-      available, so it stands in for a "test" task until a real test suite
-      exists.
+      Type-check, build, and unit-test the web app. `npm run build` runs
+      `tsc -b && vite build`, which type-checks the whole app. `npm run
+      test` runs Vitest over framework-agnostic logic modules
+      (`src/lib/**/*.test.ts`, e.g. the S05 mask editing primitives) — there
+      is still no component/DOM test setup, so React components themselves
+      remain covered by manual/code-review verification only.
     dir: web
     cmds:
       - npm run build
+      - npm run test

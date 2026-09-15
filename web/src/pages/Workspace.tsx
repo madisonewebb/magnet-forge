@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchFixtureProject } from "../api/client";
-import type { ProjectSummary } from "../api/schemas";
+import type { ProjectSummary, UploadResponse } from "../api/schemas";
+import { BackgroundEditor } from "../components/BackgroundEditor";
 import { ImageUpload } from "../components/ImageUpload";
 
 type LoadState =
@@ -10,6 +11,7 @@ type LoadState =
 
 export function Workspace() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [uploadedImage, setUploadedImage] = useState<UploadResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,8 +38,14 @@ export function Workspace() {
     <div>
       <section>
         <h2>Upload artwork</h2>
-        <ImageUpload />
+        <ImageUpload onUploaded={setUploadedImage} />
       </section>
+
+      {uploadedImage && (
+        <section style={{ marginTop: "2rem" }}>
+          <BackgroundEditor key={uploadedImage.imageDataUrl} image={uploadedImage} />
+        </section>
+      )}
 
       <section style={{ marginTop: "2rem" }}>
         <h2>Fixture project</h2>

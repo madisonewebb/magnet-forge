@@ -46,10 +46,11 @@ reuses its existing ESLint (`npm run lint`) and TypeScript build
 > **Note on `task test:web`:** there is still no component/DOM test setup —
 > `npm run build` (`tsc -b && vite build`) type-checks the whole app, and
 > `npm run test` (Vitest) covers framework-agnostic logic modules under
-> `web/src/lib/**/*.test.ts` (e.g. `mask.ts`, the S05 background-mask
-> primitives), which are written to operate on plain pixel buffers so they
-> don't need a DOM. React components themselves remain covered by
-> manual/code-review verification until a component test setup exists.
+> `web/src/lib/**/*.test.ts` (e.g. `mask.ts` and `palette.ts`, the S05/S06
+> background-mask and color-quantization primitives), which are written to
+> operate on plain pixel buffers so they don't need a DOM. React components
+> themselves remain covered by manual/code-review verification until a
+> component test setup exists.
 
 ## Running the services locally
 
@@ -167,6 +168,37 @@ The pixel-level primitives in `web/src/lib/mask.ts` are framework-agnostic
 (operate on plain typed arrays) and covered by `web/src/lib/mask.test.ts`;
 the React component itself is manual/code-review verified only, per the
 `task test:web` note above.
+
+## Reducing to a color palette
+
+Clicking "Continue to color simplification" in the background editor hands
+a snapshot of the current mask and original pixel data to
+`web/src/components/PaletteEditor.tsx`:
+
+- Color quantization (`quantizePalette` in `web/src/lib/palette.ts`) is
+  k-means over **foreground pixels only** — background/transparent pixels
+  never contribute a sample and never consume one of the 2-8 palette slots.
+- Seeding uses deterministic farthest-point sampling, which favors
+  including visually distinct outlier colors over always picking the most
+  frequent ones. A user can also explicitly **lock** a color (via the
+  browser's native color-picker swatches, which include an eyedropper in
+  Chromium browsers, letting you sample directly off the canvas) to
+  guarantee it survives quantization regardless of how rare it is —
+  locked colors seed fixed centroids that k-means never moves.
+- `applyPalette` recolors foreground pixels to their nearest palette color
+  for the simplified preview; a "compare with original" toggle re-renders
+  the (background-corrected, but not yet recolored) image for reference.
+  Neither the original pixel buffer nor the mask handed in is ever
+  mutated — palette-size and lock changes only recompute the preview.
+
+The pixel-level primitives in `web/src/lib/palette.ts` are
+framework-agnostic and covered by `web/src/lib/palette.test.ts`, including
+a synthetic "three well-separated colors plus transparent background"
+fixture (confirming background never becomes a fourth color) and a
+dominant-pair-vs-locked-accent fixture (confirming a locked color survives
+even when two much larger clusters would otherwise crowd it out at a small
+palette size). The React component itself is manual/code-review verified
+only, per the `task test:web` note above.
 
 ## Environment files
 

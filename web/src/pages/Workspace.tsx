@@ -3,15 +3,29 @@ import { fetchFixtureProject } from "../api/client";
 import type { ProjectSummary, UploadResponse } from "../api/schemas";
 import { BackgroundEditor } from "../components/BackgroundEditor";
 import { ImageUpload } from "../components/ImageUpload";
+import { PaletteEditor } from "../components/PaletteEditor";
 
 type LoadState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "success"; project: ProjectSummary };
 
+interface SimplificationInput {
+  mask: Uint8ClampedArray;
+  originalImageData: ImageData;
+}
+
 export function Workspace() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [uploadedImage, setUploadedImage] = useState<UploadResponse | null>(null);
+  const [simplificationInput, setSimplificationInput] = useState<SimplificationInput | null>(
+    null,
+  );
+
+  const handleUploaded = (result: UploadResponse) => {
+    setUploadedImage(result);
+    setSimplificationInput(null);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -38,12 +52,28 @@ export function Workspace() {
     <div>
       <section>
         <h2>Upload artwork</h2>
-        <ImageUpload onUploaded={setUploadedImage} />
+        <ImageUpload onUploaded={handleUploaded} />
       </section>
 
       {uploadedImage && (
         <section style={{ marginTop: "2rem" }}>
-          <BackgroundEditor key={uploadedImage.imageDataUrl} image={uploadedImage} />
+          <BackgroundEditor
+            key={uploadedImage.imageDataUrl}
+            image={uploadedImage}
+            onDone={(mask, originalImageData) =>
+              setSimplificationInput({ mask, originalImageData })
+            }
+          />
+        </section>
+      )}
+
+      {uploadedImage && simplificationInput && (
+        <section style={{ marginTop: "2rem" }}>
+          <PaletteEditor
+            image={uploadedImage}
+            imageData={simplificationInput.originalImageData}
+            mask={simplificationInput.mask}
+          />
         </section>
       )}
 

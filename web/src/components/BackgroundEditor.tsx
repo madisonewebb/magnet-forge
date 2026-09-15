@@ -13,6 +13,14 @@ type Tool = "select-background" | "keep" | "remove";
 
 interface BackgroundEditorProps {
   image: UploadResponse;
+  // Hands a snapshot of the current mask + decoded original pixels to the
+  // next pipeline step (S06 color reduction) when the user is done
+  // correcting the background. A snapshot (not a live-shared buffer) keeps
+  // this editor free to keep mutating its own mask afterwards — the AC's
+  // "keep the original image and mask editable" is about not destroying
+  // either, not about them being the same object as whatever consumes them
+  // next.
+  onDone?: (mask: Uint8ClampedArray, originalImageData: ImageData) => void;
 }
 
 // Canvas display is capped and scaled via CSS; the canvas's own
@@ -29,7 +37,7 @@ const MAX_DISPLAY_WIDTH = 640;
  * comparison toggle. See web/src/lib/mask.ts for the pixel-level
  * primitives (kept framework-agnostic and unit-tested there).
  */
-export function BackgroundEditor({ image }: BackgroundEditorProps) {
+export function BackgroundEditor({ image, onDone }: BackgroundEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalDataRef = useRef<ImageData | null>(null);
   const maskRef = useRef<Uint8ClampedArray | null>(null);
@@ -179,6 +187,15 @@ export function BackgroundEditor({ image }: BackgroundEditorProps) {
     requestRedraw();
   };
 
+  const handleDone = () => {
+    const original = originalDataRef.current;
+    const mask = maskRef.current;
+    if (!original || !mask || !onDone) return;
+    // Clone the mask: this editor keeps mutating `maskRef.current` in
+    // place for further corrections, so the next step needs its own copy.
+    onDone(new Uint8ClampedArray(mask), original);
+  };
+
   const displayWidth = Math.min(MAX_DISPLAY_WIDTH, image.width);
 
   return (
@@ -258,6 +275,14 @@ export function BackgroundEditor({ image }: BackgroundEditorProps) {
           <button type="button" onClick={handleReset}>
             Reset mask
           </button>
+          {onDone && (
+            <>
+              {" "}
+              <button type="button" onClick={handleDone} disabled={!ready}>
+                Continue to color simplification →
+              </button>
+            </>
+          )}
         </div>
       </div>
 

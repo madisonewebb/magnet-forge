@@ -25,32 +25,44 @@ function isAcceptedFile(file: File): boolean {
   return ACCEPTED_MIME_TYPES.includes(file.type);
 }
 
-export function ImageUpload() {
+interface ImageUploadProps {
+  // Notified after a successful upload, in addition to this component's
+  // own preview — lets a parent (e.g. Workspace) pick up the result for
+  // the next pipeline step (background removal) without this component
+  // needing to know anything about that step.
+  onUploaded?: (result: UploadResponse) => void;
+}
+
+export function ImageUpload({ onUploaded }: ImageUploadProps = {}) {
   const [state, setState] = useState<UploadState>({ status: "idle" });
   const [isDragActive, setIsDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback((file: File) => {
-    if (!isAcceptedFile(file)) {
-      setState({
-        status: "error",
-        message: `"${file.name}" is not a PNG or JPEG file. Please choose a different file.`,
-      });
-      return;
-    }
-
-    setState({ status: "uploading" });
-    uploadImage(file)
-      .then((result) => {
-        setState({ status: "success", result });
-      })
-      .catch((error: unknown) => {
+  const handleFile = useCallback(
+    (file: File) => {
+      if (!isAcceptedFile(file)) {
         setState({
           status: "error",
-          message: error instanceof ApiError ? error.message : "Upload failed. Please try again.",
+          message: `"${file.name}" is not a PNG or JPEG file. Please choose a different file.`,
         });
-      });
-  }, []);
+        return;
+      }
+
+      setState({ status: "uploading" });
+      uploadImage(file)
+        .then((result) => {
+          setState({ status: "success", result });
+          onUploaded?.(result);
+        })
+        .catch((error: unknown) => {
+          setState({
+            status: "error",
+            message: error instanceof ApiError ? error.message : "Upload failed. Please try again.",
+          });
+        });
+    },
+    [onUploaded],
+  );
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
